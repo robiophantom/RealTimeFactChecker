@@ -1,0 +1,149 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { UploadCloud, File as FileIcon, X } from 'lucide-react'
+
+export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) => void }) {
+  const [dragActive, setDragActive] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0])
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!file) return
+    setUploading(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      // Send the POST request to the FastAPI backend
+      const response = await fetch('http://localhost:8000/api/v1/upload', {
+        method: 'POST',
+        body: formData,
+        // The browser automatically sets Content-Type to multipart/form-data with the correct boundary
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file to backend')
+      }
+
+      const data = await response.json()
+      
+      if (data.upload_id) {
+        onUploadStarted(data.upload_id)
+      }
+      
+    } catch (e) {
+      console.error("Upload failed", e)
+      alert("There was an error uploading your file. Please check if the backend is running.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="w-full">
+      <AnimatePresence mode="wait">
+        {!file ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-colors flex flex-col items-center justify-center
+              ${dragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/50'}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              className="hidden"
+              onChange={handleChange}
+              accept="audio/*,video/*,application/pdf,.txt,.docx"
+            />
+            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 text-zinc-400">
+              <UploadCloud className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">Click or drag file to this area to upload</h3>
+            <p className="text-sm text-zinc-500 max-w-sm">
+              Support for audio (mp3, wav), video (mp4), and documents (pdf, docx, txt).
+            </p>
+            <button 
+              onClick={() => inputRef.current?.click()}
+              className="mt-6 px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Select File
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 flex flex-col items-center"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-4 text-indigo-400">
+              <FileIcon className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-medium text-white truncate max-w-[80%]">{file.name}</h3>
+            <p className="text-sm text-zinc-500 mb-6">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            
+            <div className="flex gap-4 w-full max-w-xs">
+              <button 
+                onClick={() => setFile(null)}
+                disabled={uploading}
+                className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center disabled:opacity-50"
+              >
+                {uploading ? (
+                  <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                  />
+                ) : (
+                  'Process'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
