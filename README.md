@@ -112,6 +112,3 @@ When you are ready to put this on the internet for real users:
    - One for the background workers (Start Command: `dramatiq app.workers.tasks`)
 3. **Redis**: Use a managed Redis service (like Upstash) instead of Docker, and update your backend `.env` variables to point to it.
 4. **Auth**: Add your live domain to Supabase's authentication settings so Google OAuth and email links work correctly.
-
----
-*Built with ❤️ and AI.*

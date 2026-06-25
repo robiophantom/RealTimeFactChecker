@@ -2,12 +2,14 @@
 
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UploadCloud, File as FileIcon, X } from 'lucide-react'
+import { UploadCloud, File as FileIcon, X, AlertCircle } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) => void }) {
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -20,33 +22,54 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
     }
   }
 
+  const handleFile = (selectedFile: File) => {
+    setError(null)
+    const validTypes = ['audio/mpeg', 'audio/wav', 'video/mp4', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
+    if (!validTypes.includes(selectedFile.type)) {
+      setError('Invalid file type. Please upload audio, video, PDF, DOCX, or TXT.')
+      return
+    }
+    if (selectedFile.size > 50 * 1024 * 1024) { // 50MB
+      setError('File is too large. Maximum size is 50MB.')
+      return
+    }
+    setFile(selectedFile)
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0])
+      handleFile(e.dataTransfer.files[0])
     }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      handleFile(e.target.files[0])
     }
   }
 
   const handleUpload = async () => {
     if (!file) return
     setUploading(true)
+    setError(null)
     
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
       const formData = new FormData()
       formData.append('file', file)
 
       // Send the POST request to the FastAPI backend
       const response = await fetch('http://localhost:8000/api/v1/upload', {
         method: 'POST',
+        headers: {
+          ...(session && { 'Authorization': `Bearer ${session.access_token}` })
+        },
         body: formData,
         // The browser automatically sets Content-Type to multipart/form-data with the correct boundary
       })

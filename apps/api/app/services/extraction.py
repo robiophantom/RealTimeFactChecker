@@ -21,7 +21,7 @@ def extract_claims(text: str) -> list[dict]:
     """
     
     completion = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": "You are a precise data extraction assistant. Always output valid JSON array."},
             {"role": "user", "content": prompt}

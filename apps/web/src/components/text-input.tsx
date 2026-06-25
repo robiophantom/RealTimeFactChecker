@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Type, Send } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string) => void }) {
   const [text, setText] = useState('')
@@ -15,11 +16,15 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
     setProcessing(true)
     
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
       // Send the text to the FastAPI backend
       const response = await fetch('http://localhost:8000/api/v1/text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(session && { 'Authorization': `Bearer ${session.access_token}` })
         },
         body: JSON.stringify({ text: text }),
       })
@@ -55,16 +60,17 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
             placeholder="Paste or type the text you want to fact-check here..."
             className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-indigo-500/50 rounded-xl pl-12 pr-4 py-4 min-h-[200px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-y"
             disabled={processing}
+            maxLength={5000}
           />
         </div>
         
         <div className="flex justify-between items-center">
-          <p className="text-xs text-zinc-500">
-            {text.length} characters
+          <p className={`text-xs ${text.length >= 5000 ? 'text-red-400 font-medium' : 'text-zinc-500'}`}>
+            {text.length} / 5000 characters
           </p>
           <button 
             type="submit"
-            disabled={processing || text.trim().length === 0}
+            disabled={processing || text.trim().length === 0 || text.length > 5000}
             className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {processing ? (

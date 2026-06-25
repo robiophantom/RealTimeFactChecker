@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { FileText, LogOut, Settings, BarChart2 } from 'lucide-react'
+import { FileText, LogOut, Settings, BarChart2, Shield } from 'lucide-react'
 
 export default async function DashboardLayout({
   children,
@@ -14,6 +14,9 @@ export default async function DashboardLayout({
   if (!user) {
     redirect('/login')
   }
+
+  // Fetch the user's role
+  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
 
   return (
     <div className="flex h-screen bg-black text-white selection:bg-indigo-500/30">
@@ -38,6 +41,13 @@ export default async function DashboardLayout({
             <Settings className="w-4 h-4" />
             Settings
           </Link>
+          
+          {profile?.role === 'admin' && (
+            <Link href="/admin" className="flex items-center gap-3 px-3 py-2 mt-4 text-sm font-medium text-indigo-400 rounded-lg hover:bg-indigo-500/10 transition-colors border border-indigo-500/20">
+              <Shield className="w-4 h-4" />
+              Admin Panel
+            </Link>
+          )}
         </nav>
         
         <div className="p-4 border-t border-zinc-800">

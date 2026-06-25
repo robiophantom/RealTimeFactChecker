@@ -13,5 +13,7 @@ dependencies = [
     "python-multipart",
     "pyjwt",
     "supabase",
-    "requests"
+    "requests",
+    "PyMuPDF",
+    "python-docx"
 ]

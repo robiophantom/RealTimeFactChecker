@@ -28,6 +28,8 @@ services:
     depends_on:
       - redis
       - db
+    volumes:
+      - shared_data:/shared_data
 
   worker:
     build: ./apps/api
@@ -37,7 +39,10 @@ services:
     depends_on:
       - redis
       - db
+    volumes:
+      - shared_data:/shared_data
 
 volumes:
   redis_data:
   postgres_data:
+  shared_data:

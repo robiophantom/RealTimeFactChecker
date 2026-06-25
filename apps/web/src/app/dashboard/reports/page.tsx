@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
-import { FileText, Download, Clock, CheckCircle2, XCircle } from 'lucide-react'
+import { FileText, Download, Clock, CheckCircle2, XCircle, Eye } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
@@ -10,7 +11,7 @@ export default async function ReportsPage() {
   // Fetch historical reports for this user
   const { data: reports } = await supabase
     .from('reports')
-    .select('*, uploads(file_name, file_type)')
+    .select('*, uploads(filename, file_type)')
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
 
@@ -48,9 +49,9 @@ export default async function ReportsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <FileText className="w-4 h-4 text-indigo-400" />
-                        <span className="font-medium text-zinc-200">
-                          {report.uploads?.file_name || 'Live Microphone Session'}
-                        </span>
+                        <Link href={`/dashboard/reports/${report.id}`} className="font-medium text-zinc-200 hover:text-indigo-400 transition-colors">
+                          {report.uploads?.filename || 'Live Microphone Session'}
+                        </Link>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -73,10 +74,24 @@ export default async function ReportsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors">
-                        <Download className="w-4 h-4" />
-                        <span>Export PDF</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link 
+                          href={`/dashboard/reports/${report.id}`}
+                          className="text-zinc-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View</span>
+                        </Link>
+                        <Link 
+                          href={`/dashboard/reports/${report.id}/print`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Export PDF</span>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
