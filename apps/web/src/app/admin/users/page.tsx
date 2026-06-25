@@ -1,11 +1,20 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { Users as UsersIcon, ShieldAlert, Mail } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 export default async function AdminUsersPage() {
   const supabase = await createClient()
   
-  // Fetch users (Requires Service Role in production for full list, but here we can just show a mock or fetch public data if allowed)
-  const { data: users } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(10)
+  // Ensure Admin Access
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') redirect('/dashboard')
+
+  // Fetch users using Service Role to bypass RLS
+  const adminClient = await createAdminClient()
+  const { data: users } = await adminClient.from('users').select('*').order('created_at', { ascending: false })
 
   return (
     <div className="space-y-8">

@@ -15,8 +15,10 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Fetch the user's role
-  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
+  // Fetch the user's role and name
+  const { data: profile } = await supabase.from('users').select('role, full_name').eq('id', user.id).single()
+  
+  const displayName = profile?.full_name || user.email
 
   return (
     <div className="flex h-screen bg-black text-white selection:bg-indigo-500/30">
@@ -53,10 +55,13 @@ export default async function DashboardLayout({
         <div className="p-4 border-t border-zinc-800">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-sm">
-              {user.email?.[0].toUpperCase()}
+              {displayName?.[0].toUpperCase()}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium truncate">{user.email}</p>
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              {profile?.full_name && (
+                <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+              )}
             </div>
           </div>
           <form action="/auth/signout" method="post">

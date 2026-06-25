@@ -96,6 +96,10 @@ async def get_upload_status(
     if res.data:
         status = res.data[0]["status"]
         error = res.data[0]["error_message"]
+    else:
+        # The row was deleted by the worker due to an abort/failure.
+        status = "failed"
+        error = "Process failed and was cleaned up."
         
     return {
         "upload_id": upload_id, 

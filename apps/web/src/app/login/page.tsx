@@ -45,6 +45,7 @@ function LoginContent() {
                   id="full_name"
                   name="full_name"
                   type="text"
+                  autoComplete="name"
                   required
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                   placeholder="John Doe"
@@ -58,6 +59,7 @@ function LoginContent() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                 placeholder="you@example.com"
@@ -70,6 +72,7 @@ function LoginContent() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 required
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                 placeholder="••••••••"

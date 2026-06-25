@@ -171,5 +171,6 @@ def process_media(upload_id: str):
     except Exception as e:
         print(f"Failed processing upload {upload_id}: {e}")
         update_step(upload_id, f"Error: {str(e)}")
-        supabase_client.table("uploads").update({"status": "failed", "error_message": str(e)}).eq("id", upload_id).execute()
+        # Delete from DB to ensure no partial data remains (Cascades to transcripts/claims)
+        supabase_client.table("uploads").delete().eq("id", upload_id).execute()
 
