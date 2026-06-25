@@ -71,7 +71,7 @@ export default function PrintReportPage({ params }: { params: Promise<{ id: stri
         <h1 className="text-3xl font-bold mb-2">Fact-Check Report</h1>
         <p className="text-gray-600">
           <strong>Source File:</strong> {report.uploads?.filename || 'Unknown'} <br/>
-          <strong>Date Verified:</strong> {new Date(report.created_at).toLocaleDateString()}
+          <strong>Date Verified:</strong> {new Date(report.created_at).toLocaleDateString('en-US')}
         </p>
       </div>
 

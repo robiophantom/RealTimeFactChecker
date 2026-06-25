@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mic, Square, Radio } from 'lucide-react'
+import { Mic, Square, Radio, Loader2 } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string) => void }) {
   const [isRecording, setIsRecording] = useState(false)
   const [volume, setVolume] = useState(0)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
@@ -29,30 +30,69 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
       
-      const mockSessionId = "mic-session-" + Math.floor(Math.random() * 1000)
-      setSessionId(mockSessionId)
-      onStreamStarted(mockSessionId)
-
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data)
-          // In a real app, send chunk to backend WebSocket or API
         }
       }
 
-      mediaRecorder.start(1000) // Emit chunks every second
+      mediaRecorder.start(250) // Emit chunks every 250ms
       setIsRecording(true)
     } catch (err) {
       console.error("Error accessing microphone", err)
+      alert("Microphone access denied or unavailable.")
     }
   }
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (mediaRecorderRef.current && isRecording) {
+      // First, capture the stop event
+      const stopped = new Promise((resolve) => {
+        mediaRecorderRef.current!.onstop = resolve
+      })
+      
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
       setIsRecording(false)
+      
+      await stopped
+      
+      // Now all chunks are ready
+      const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+      if (blob.size === 0) return
+      
+      setIsUploading(true)
+      
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+
+        const formData = new FormData()
+        // Append it as a file
+        formData.append('file', blob, 'recorded_audio.webm')
+
+        const response = await fetch('http://localhost:8000/api/v1/upload', {
+          method: 'POST',
+          headers: {
+            ...(session && { 'Authorization': `Bearer ${session.access_token}` })
+          },
+          body: formData,
+        })
+
+        if (!response.ok) throw new Error('Upload failed')
+
+        const data = await response.json()
+        if (data.upload_id) {
+          onStreamStarted(data.upload_id)
+        }
+      } catch (err) {
+        console.error("Upload error", err)
+        alert("Failed to process recording.")
+      } finally {
+        setIsUploading(false)
+      }
     }
   }
 
@@ -75,20 +115,27 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
           
           <button
             onClick={isRecording ? stopRecording : startRecording}
-            className={`w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-xl z-10
+            disabled={isUploading}
+            className={`w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-xl z-10 disabled:opacity-50
               ${isRecording 
                 ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30' 
                 : 'bg-indigo-600 hover:bg-indigo-500 text-white'
               }`}
           >
-            {isRecording ? <Square className="w-8 h-8 fill-current" /> : <Mic className="w-8 h-8" />}
+            {isUploading ? (
+              <Loader2 className="w-8 h-8 animate-spin" />
+            ) : isRecording ? (
+              <Square className="w-8 h-8 fill-current" />
+            ) : (
+              <Mic className="w-8 h-8" />
+            )}
           </button>
         </div>
       </div>
 
       <div className="text-center">
         <h3 className="text-xl font-medium text-white mb-2">
-          {isRecording ? 'Listening live...' : 'Click to start verifying'}
+          {isUploading ? 'Uploading...' : isRecording ? 'Listening live...' : 'Click to start verifying'}
         </h3>
         <p className="text-sm text-zinc-500 flex items-center justify-center gap-2">
           {isRecording ? (
@@ -98,12 +145,14 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="w-2 h-2 rounded-full bg-red-500"
               />
-              Streaming audio securely
+              Recording audio securely
             </>
+          ) : isUploading ? (
+            'Processing your recording...'
           ) : (
             <>
               <Radio className="w-4 h-4" />
-              Real-time fact-checking via microphone
+              Record audio directly for fact-checking
             </>
           )}
         </p>

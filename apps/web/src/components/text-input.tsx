@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Type, Send } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
@@ -8,6 +8,12 @@ import { createClient } from '@/utils/supabase/client'
 export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string) => void }) {
   const [text, setText] = useState('')
   const [processing, setProcessing] = useState(false)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('factCheckerTextDraft')
+    if (saved) setText(saved)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +42,8 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
       const data = await response.json()
       
       if (data.upload_id) {
+        localStorage.removeItem('factCheckerTextDraft')
+        setText('')
         onProcessStarted(data.upload_id)
       }
       
@@ -47,6 +55,12 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
     }
   }
 
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value
+    setText(newText)
+    localStorage.setItem('factCheckerTextDraft', newText)
+  }
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -56,7 +70,7 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
           </div>
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTextChange}
             placeholder="Paste or type the text you want to fact-check here..."
             className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-indigo-500/50 rounded-xl pl-12 pr-4 py-4 min-h-[200px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-y"
             disabled={processing}

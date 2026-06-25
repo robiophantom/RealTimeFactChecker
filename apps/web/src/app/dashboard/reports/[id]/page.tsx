@@ -67,7 +67,7 @@ export default async function ReportViewPage({ params }: { params: Promise<{ id:
         <h1 className="text-3xl font-bold text-white mb-2">Fact-Check Report</h1>
         <p className="text-zinc-400 mb-8">
           Source: <span className="text-zinc-200 font-medium">{report.uploads?.filename || 'Unknown Source'}</span> • 
-          Verified on {new Date(report.created_at).toLocaleDateString()}
+          Verified on {new Date(report.created_at).toLocaleDateString('en-US')}
         </p>
 
         <div className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-xl mb-8">

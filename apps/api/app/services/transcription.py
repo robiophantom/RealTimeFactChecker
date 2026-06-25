@@ -12,9 +12,7 @@ def transcribe_audio(file_path: str) -> str:
         translation = client.audio.transcriptions.create(
             file=(os.path.basename(file_path), file.read()),
             model="whisper-large-v3",
-            prompt="Specify context or leave empty",  # Optional
             response_format="json",  
-            language="en", 
             temperature=0.0
         )
         return translation.text
