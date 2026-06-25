@@ -19,7 +19,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="bg-zinc-950 border border-zinc-800/50 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="flex border-b border-zinc-800/50">
+        <div className={`flex border-b border-zinc-800/50 ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
           <button
             onClick={() => setActiveTab('upload')}
             className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === 'upload' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -49,7 +49,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className="p-8 min-h-[300px]">
+        <div className={`p-8 min-h-[300px] ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
           {activeTab === 'upload' && <UploadZone onUploadStarted={(id) => setCurrentUploadId(id)} />}
           {activeTab === 'text' && <TextInput onProcessStarted={(id) => setCurrentUploadId(id)} />}
           {activeTab === 'mic' && <RealtimeMic onStreamStarted={(id) => setCurrentUploadId(id)} />}

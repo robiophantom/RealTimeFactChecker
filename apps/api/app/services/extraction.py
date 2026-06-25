@@ -27,6 +27,7 @@ def extract_claims(text: str) -> list[dict]:
             {"role": "user", "content": prompt}
         ],
         temperature=0.0,
+        max_tokens=1000,
         response_format={"type": "json_object"} # Some Groq models support JSON mode
     )
     
