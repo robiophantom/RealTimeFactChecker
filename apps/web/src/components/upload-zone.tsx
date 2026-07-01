@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UploadCloud, File as FileIcon, X, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
@@ -10,7 +10,17 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [limits, setLimits] = useState({ max_media_size_mb: 50, max_text_size_mb: 10 })
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/v1/limits')
+      .then(res => res.json())
+      .then(data => {
+        if (data) setLimits(data)
+      })
+      .catch(console.error)
+  }, [])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -29,8 +39,12 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
       setError('Invalid file type. Please upload audio, video, PDF, DOCX, or TXT.')
       return
     }
-    if (selectedFile.size > 50 * 1024 * 1024) { // 50MB
-      setError('File is too large. Maximum size is 50MB.')
+    
+    const isMedia = selectedFile.type.startsWith("audio/") || selectedFile.type.startsWith("video/")
+    const max_mb = isMedia ? limits.max_media_size_mb : limits.max_text_size_mb
+    
+    if (selectedFile.size > max_mb * 1024 * 1024) {
+      setError(`File is too large. Maximum size is ${max_mb}MB for this file type.`)
       return
     }
     setFile(selectedFile)
@@ -64,29 +78,27 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
       const formData = new FormData()
       formData.append('file', file)
 
-      // Send the POST request to the FastAPI backend
       const response = await fetch('http://localhost:8000/api/v1/upload', {
         method: 'POST',
         headers: {
           ...(session && { 'Authorization': `Bearer ${session.access_token}` })
         },
         body: formData,
-        // The browser automatically sets Content-Type to multipart/form-data with the correct boundary
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to upload file to backend')
-      }
-
       const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to upload file to backend')
+      }
       
       if (data.upload_id) {
         onUploadStarted(data.upload_id)
       }
       
-    } catch (e) {
+    } catch (e: any) {
       console.error("Upload failed", e)
-      alert("There was an error uploading your file. Please check if the backend is running.")
+      setError(e.message || "There was an error uploading your file.")
     } finally {
       setUploading(false)
     }
@@ -94,6 +106,16 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
 
   return (
     <div className="w-full">
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3"
+        >
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-rose-400">{error}</p>
+        </motion.div>
+      )}
       <AnimatePresence mode="wait">
         {!file ? (
           <motion.div

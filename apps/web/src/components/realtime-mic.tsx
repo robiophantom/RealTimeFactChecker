@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mic, Square, Radio, Loader2 } from 'lucide-react'
+import { Mic, Square, Radio, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string) => void }) {
   const [isRecording, setIsRecording] = useState(false)
   const [volume, setVolume] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
@@ -16,7 +17,6 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
     let interval: NodeJS.Timeout
     if (isRecording) {
       interval = setInterval(() => {
-        // Mock volume meter
         setVolume(Math.random() * 100)
       }, 100)
     } else {
@@ -26,6 +26,7 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
   }, [isRecording])
 
   const startRecording = async () => {
+    setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream)
@@ -38,17 +39,16 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
         }
       }
 
-      mediaRecorder.start(250) // Emit chunks every 250ms
+      mediaRecorder.start(250)
       setIsRecording(true)
     } catch (err) {
       console.error("Error accessing microphone", err)
-      alert("Microphone access denied or unavailable.")
+      setError("Microphone access denied or unavailable.")
     }
   }
 
   const stopRecording = async () => {
     if (mediaRecorderRef.current && isRecording) {
-      // First, capture the stop event
       const stopped = new Promise((resolve) => {
         mediaRecorderRef.current!.onstop = resolve
       })
@@ -59,7 +59,6 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
       
       await stopped
       
-      // Now all chunks are ready
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
       if (blob.size === 0) return
       
@@ -70,7 +69,6 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
         const { data: { session } } = await supabase.auth.getSession()
 
         const formData = new FormData()
-        // Append it as a file
         formData.append('file', blob, 'recorded_audio.webm')
 
         const response = await fetch('http://localhost:8000/api/v1/upload', {
@@ -81,15 +79,15 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
           body: formData,
         })
 
-        if (!response.ok) throw new Error('Upload failed')
-
         const data = await response.json()
+        if (!response.ok) throw new Error(data.detail || 'Upload failed')
+
         if (data.upload_id) {
           onStreamStarted(data.upload_id)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Upload error", err)
-        alert("Failed to process recording.")
+        setError(err.message || "Failed to process recording.")
       } finally {
         setIsUploading(false)
       }
@@ -98,11 +96,21 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
 
   return (
     <div className="w-full flex flex-col items-center justify-center p-8">
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 w-full max-w-md"
+        >
+          <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-rose-400">{error}</p>
+        </motion.div>
+      )}
+
       <div className="relative mb-12">
         <div className="absolute inset-0 bg-indigo-500 rounded-full blur-3xl opacity-20" />
         
         <div className="relative w-48 h-48 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center">
-          {/* Visualizer rings */}
           {isRecording && [1, 2, 3].map((i) => (
             <motion.div
               key={i}

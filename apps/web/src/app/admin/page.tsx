@@ -19,8 +19,26 @@ export default async function AdminDashboard() {
   // 1. Fetch Aggregated Counts
   const { count: totalUsers } = await adminClient.from('users').select('*', { count: 'exact', head: true })
   const { count: totalReports } = await adminClient.from('reports').select('*', { count: 'exact', head: true })
-  const { count: totalClaims } = await adminClient.from('claims').select('*', { count: 'exact', head: true })
-  const { count: trueClaims } = await adminClient.from('claim_verifications').select('*', { count: 'exact', head: true }).eq('verdict', 'True')
+  
+  // Total API requests (actions in usage_logs) and total tokens
+  const { data: usageData, count: totalApiRequests } = await adminClient.from('usage_logs').select('input_tokens, output_tokens', { count: 'exact' })
+  let totalTokenUsage = 0
+  if (usageData) {
+    totalTokenUsage = usageData.reduce((acc, row) => acc + (row.input_tokens || 0) + (row.output_tokens || 0), 0)
+  }
+
+  // Global Settings
+  let systemSettings = {
+    max_text_size_mb: 10,
+    max_media_size_mb: 50,
+    max_text_length: 100000,
+    max_transcript_tokens: 7000,
+    user_monthly_token_limit: 10000
+  }
+  const { data: settingsData } = await adminClient.from('system_settings').select('setting_value').eq('setting_key', 'limits').single()
+  if (settingsData && settingsData.setting_value) {
+    systemSettings = settingsData.setting_value
+  }
 
   // 2. Fetch Recent Signups (Top 10)
   const { data: recentUsersData } = await adminClient
@@ -70,11 +88,12 @@ export default async function AdminDashboard() {
     <AdminClientWrapper 
       totalUsers={totalUsers || 0}
       totalReports={totalReports || 0}
-      totalClaims={totalClaims || 0}
-      trueClaims={trueClaims || 0}
+      totalTokenUsage={totalTokenUsage}
+      totalApiRequests={totalApiRequests || 0}
       chartData={chartData}
       chartLabels={chartLabels}
       recentUsers={recentUsers}
+      systemSettings={systemSettings}
     />
   )
 }

@@ -5,6 +5,29 @@ export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  let maxTokens = 10000
+  const { data: settingsData } = await supabase.from('system_settings').select('setting_value').eq('setting_key', 'limits').single()
+  if (settingsData && settingsData.setting_value) {
+    maxTokens = settingsData.setting_value.user_monthly_token_limit || 10000
+  }
+
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  
+  const { data: usageData } = await supabase
+    .from('usage_logs')
+    .select('input_tokens, output_tokens')
+    .eq('user_id', user?.id)
+    .gte('created_at', monthStart)
+    
+  let usedTokens = 0
+  if (usageData) {
+    usedTokens = usageData.reduce((acc, row) => acc + (row.input_tokens || 0) + (row.output_tokens || 0), 0)
+  }
+  
+  const remainingTokens = Math.max(0, maxTokens - usedTokens)
+  const percentageUsed = Math.min(100, Math.round((usedTokens / maxTokens) * 100))
+
   return (
     <div className="space-y-8 max-w-3xl">
       <div>
@@ -42,8 +65,8 @@ export default async function SettingsPage() {
           <div className="p-6">
             <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl mb-4">
               <div>
-                <h3 className="font-medium text-white mb-1">Free Tier</h3>
-                <p className="text-sm text-zinc-400">10,000 API tokens remaining this month</p>
+                <h3 className="font-medium text-white mb-1">Current Tier</h3>
+                <p className="text-sm text-zinc-400">{remainingTokens.toLocaleString()} API tokens remaining this month</p>
               </div>
               <button className="px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors">
                 Upgrade Plan
@@ -51,9 +74,9 @@ export default async function SettingsPage() {
             </div>
             
             <div className="w-full bg-zinc-900 rounded-full h-2 mb-2">
-              <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+              <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${percentageUsed}%` }}></div>
             </div>
-            <p className="text-xs text-zinc-500 text-right">4,500 / 10,000 used</p>
+            <p className="text-xs text-zinc-500 text-right">{usedTokens.toLocaleString()} / {maxTokens.toLocaleString()} used</p>
           </div>
         </div>
 

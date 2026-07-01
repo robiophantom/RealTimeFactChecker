@@ -3,6 +3,7 @@ import dramatiq
 import redis
 import fitz # PyMuPDF
 import docx
+from datetime import datetime
 from app.workers.broker import redis_broker
 from app.services.transcription import transcribe_audio
 from app.services.extraction import extract_claims
@@ -15,15 +16,41 @@ redis_client = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 class CancelledError(Exception):
     pass
 
+def get_system_limits():
+    res = supabase_client.table("system_settings").select("setting_value").eq("setting_key", "limits").execute()
+    if res.data:
+        return res.data[0]["setting_value"]
+    return {
+        "max_text_size_mb": 10,
+        "max_media_size_mb": 50,
+        "max_text_length": 100000,
+        "max_transcript_tokens": 7000,
+        "user_monthly_token_limit": 10000
+    }
+
+def check_token_quota(user_id: str, monthly_limit: int):
+    now = datetime.now()
+    month_start = datetime(now.year, now.month, 1).isoformat()
+    res = supabase_client.table("usage_logs").select("input_tokens, output_tokens").eq("user_id", user_id).gte("created_at", month_start).execute()
+    used_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in res.data)
+    if used_tokens >= monthly_limit:
+        raise ValueError(f"You have reached your monthly limit of {monthly_limit} API tokens.")
+
 def extract_text_from_file(file_path: str, file_type: str) -> str:
     if "text/plain" in file_type:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     elif "pdf" in file_type:
         text = ""
-        with fitz.open(file_path) as doc:
-            for page in doc:
-                text += page.get_text()
+        try:
+            with fitz.open(file_path) as doc:
+                for page in doc:
+                    text += page.get_text()
+        except Exception as e:
+            raise ValueError("Failed to read PDF. It might be encrypted or corrupted.")
+            
+        if len(text.strip()) == 0:
+            raise ValueError("No text found in PDF. Scanned images without text are not supported.")
         return text
     elif "document" in file_type or "docx" in file_type:
         doc = docx.Document(file_path)
@@ -55,6 +82,10 @@ def process_media(upload_id: str):
         if not upload_res.data:
             raise ValueError(f"Upload {upload_id} not found")
         upload_data = upload_res.data[0]
+        user_id = upload_data["user_id"]
+        
+        limits = get_system_limits()
+        check_token_quota(user_id, limits.get("user_monthly_token_limit", 10000))
         
         # 2. Check if text is already transcribed (e.g. pasted text)
         transcript_res = supabase_client.table("transcripts").select("*").eq("upload_id", upload_id).execute()
@@ -79,10 +110,25 @@ def process_media(upload_id: str):
                 update_step(upload_id, "Extracting text from document...")
                 text_content = extract_text_from_file(file_path, file_type)
                 
-            # Truncate text to 20000 chars to avoid hitting token limits for gigantic files
-            if len(text_content) > 20000:
-                text_content = text_content[:20000]
-                
+            # Cleanup local file
+            try:
+                os.remove(file_path)
+            except:
+                pass
+
+        if len(text_content.strip()) == 0:
+            raise ValueError("No valid speech or text data found in the file.")
+            
+        max_tokens = limits.get("max_transcript_tokens", 7000)
+        # Calculate precise token count
+        import tiktoken
+        encoding = tiktoken.get_encoding("cl100k_base")
+        num_tokens = len(encoding.encode(text_content))
+        
+        if num_tokens > max_tokens:
+            raise ValueError(f"Extracted text exceeds the maximum allowed token limit ({max_tokens} tokens). Found {num_tokens} tokens. Please provide a shorter file.")
+            
+        if not transcript_res.data:
             # Save transcript
             transcript_res = supabase_client.table("transcripts").insert({
                 "upload_id": upload_id,
@@ -90,18 +136,12 @@ def process_media(upload_id: str):
                 "language": "en"
             }).execute()
             transcript_id = transcript_res.data[0]["id"]
-            
-            # Cleanup local file
-            try:
-                os.remove(file_path)
-            except:
-                pass
 
 
         # 3. Extract claims
         check_cancel(upload_id)
         update_step(upload_id, "Analyzing text and extracting claims...")
-        claims = extract_claims(text_content)
+        claims, extract_in_tokens, extract_out_tokens = extract_claims(text_content)
         
         total_claims = len(claims)
         true_claims = false_claims = partially_true = unverified = 0
@@ -109,6 +149,9 @@ def process_media(upload_id: str):
         # Batch claims in chunks of 5
         batch_size = 5
         batches = [claims[i:i + batch_size] for i in range(0, total_claims, batch_size)]
+        
+        verify_in_tokens = 0
+        verify_out_tokens = 0
         
         for batch_index, batch in enumerate(batches):
             check_cancel(upload_id)
@@ -123,7 +166,9 @@ def process_media(upload_id: str):
             ]
             
             # Run batched verification
-            batch_results = verify_claims_batch(batch_for_verification)
+            batch_results, in_tok, out_tok = verify_claims_batch(batch_for_verification)
+            verify_in_tokens += in_tok
+            verify_out_tokens += out_tok
             
             # Save results to DB
             for c, verification in zip(batch, batch_results):
@@ -162,6 +207,16 @@ def process_media(upload_id: str):
             "partially_true_claims": partially_true,
             "unverified_claims": unverified
         }).execute()
+        
+        # Log Tokens
+        total_in = extract_in_tokens + verify_in_tokens
+        total_out = extract_out_tokens + verify_out_tokens
+        supabase_client.table("usage_logs").insert({
+            "user_id": user_id,
+            "action": "verification",
+            "input_tokens": total_in,
+            "output_tokens": total_out
+        }).execute()
 
         # Update upload status to completed
         update_step(upload_id, "Completed")
@@ -171,6 +226,6 @@ def process_media(upload_id: str):
     except Exception as e:
         print(f"Failed processing upload {upload_id}: {e}")
         update_step(upload_id, f"Error: {str(e)}")
-        # Delete from DB to ensure no partial data remains (Cascades to transcripts/claims)
-        supabase_client.table("uploads").delete().eq("id", upload_id).execute()
+        # Do not delete the upload, keep it as failed with error message
+        supabase_client.table("uploads").update({"status": "failed", "error_message": str(e)}).eq("id", upload_id).execute()
 

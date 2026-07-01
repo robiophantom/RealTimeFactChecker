@@ -13,10 +13,11 @@ RUN pip install --no-cache-dir .
 
 # Copy application code
 COPY ./app ./app
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose port for FastAPI
 EXPOSE 8000
 
-# Default command runs the API server.
-# For workers, override command in docker-compose.yml: `dramatiq app.workers.tasks`
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command runs both the API server and the dramatiq worker
+CMD ["/app/start.sh"]

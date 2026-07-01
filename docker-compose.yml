@@ -31,16 +31,7 @@ services:
     volumes:
       - shared_data:/shared_data
 
-  worker:
-    build: ./apps/api
-    command: ["dramatiq", "app.workers.tasks"]
-    env_file:
-      - ./apps/api/.env
-    depends_on:
-      - redis
-      - db
-    volumes:
-      - shared_data:/shared_data
+
 
 volumes:
   redis_data:

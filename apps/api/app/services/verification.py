@@ -27,18 +27,21 @@ def search_tavily(query: str) -> list[dict]:
         return response.json().get("results", [])
     return []
 
-def verify_claims_batch(claims_list: list[dict]) -> list[dict]:
+def verify_claims_batch(claims_list: list[dict]) -> tuple[list[dict], int, int]:
     """
     Verifies a batch of claims using Tavily Search and Groq LLM in a single request.
     claims_list is a list of dicts: [{"claim_text": "...", "context": "..."}, ...]
-    Returns a list of structured verdicts aligned with the input list.
+    Returns: (results_list, total_input_tokens, total_output_tokens)
     """
     if not claims_list:
-        return []
+        return [], 0, 0
         
     # Process in chunks of 3 to avoid blowing past token limits
     results_out = []
     chunk_size = 3
+    
+    total_in_tokens = 0
+    total_out_tokens = 0
     
     for chunk_start in range(0, len(claims_list), chunk_size):
         chunk_claims = claims_list[chunk_start:chunk_start+chunk_size]
@@ -61,24 +64,24 @@ def verify_claims_batch(claims_list: list[dict]) -> list[dict]:
         
         # 2. Analyze with Groq
         prompt = f"""
-        You are a professional fact-checker. You are given {len(chunk_claims)} claims to verify.
-        Verify each claim using the provided evidence.
+        You are a highly professional, completely unbiased fact-checker. You are given {len(chunk_claims)} claims to verify.
+        Carefully analyze and understand the provided evidence for each claim to ensure accurate results.
         
         {combined_evidence_prompt}
         
-        Analyze the evidence and produce a structured JSON output. 
-        Your output MUST be a JSON object containing a key "results" which is an array of exactly {len(chunk_claims)} objects in the same order as the claims provided.
-        Each object must have the following keys:
-        - verdict: must be one of ["True", "False", "Partially True", "Insufficient Evidence"]
+        Critically evaluate the evidence against the claim. Ensure the verdict is correct, logical, and entirely unbiased based strictly on the provided evidence.
+        Produce a structured JSON output. Your output MUST be a JSON object containing a single key "results", which must be an array of exactly {len(chunk_claims)} objects in the same order as the claims provided.
+        Each object in the "results" array must have the following keys:
+        - verdict: must be exactly one of ["True", "False", "Partially True", "Insufficient Evidence"]
         - confidence_score: a float between 0.0 and 1.0 representing your confidence in the verdict.
-        - explanation: a concise explanation of why this verdict was reached based on the evidence.
+        - explanation: a clear, accurate, and unbiased explanation of why this verdict was reached, directly referencing the provided evidence.
         """
         
         try:
             completion = groq_client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "You are a fact-checking bot. Output ONLY valid JSON containing the 'results' array."},
+                    {"role": "system", "content": "You are an expert fact-checking AI. You analyze evidence objectively and provide accurate, unbiased verdicts. Always output a valid JSON object containing the 'results' array."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
@@ -87,6 +90,10 @@ def verify_claims_batch(claims_list: list[dict]) -> list[dict]:
             )
             
             content = completion.choices[0].message.content
+            
+            if completion.usage:
+                total_in_tokens += completion.usage.prompt_tokens
+                total_out_tokens += completion.usage.completion_tokens
             
             # Robust JSON extraction
             content = content.strip()
@@ -125,8 +132,9 @@ def verify_claims_batch(claims_list: list[dict]) -> list[dict]:
         # Sleep briefly to respect TPM limits across chunks
         time.sleep(2)
                 
-    return results_out
+    return results_out, total_in_tokens, total_out_tokens
 
 # Keep the single verify_claim for fallback or other uses
 def verify_claim(claim_text: str, context: str = "") -> dict:
-    return verify_claims_batch([{"claim_text": claim_text, "context": context}])[0]
+    res, _, _ = verify_claims_batch([{"claim_text": claim_text, "context": context}])
+    return res[0] if res else {}
