@@ -40,13 +40,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 **2. Start the Background Worker:**
 ```bash
-dramatiq app.workers.tasks
+python run_worker.py
 ```
 
 ## Deployment
 
 When deploying to production, you will need to host two separate instances (e.g., on Render, Railway, or AWS ECS):
 1. **The Web API**: Start using `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-2. **The Background Worker**: Start using `dramatiq app.workers.tasks`
+2. **The Background Worker**: Start using `python run_worker.py`
 
 Ensure both instances are configured with the same environment variables and connect to the same managed Redis instance.

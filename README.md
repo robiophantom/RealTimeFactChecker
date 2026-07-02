@@ -121,6 +121,6 @@ When you are ready to put this on the internet for real users, you'll need to br
 1. **Frontend**: Deploy the `apps/web` folder to a host like Vercel. Make sure to update the `NEXT_PUBLIC_SITE_URL` environment variable to your actual domain.
 2. **Backend**: Deploy the `apps/api` folder to a service like Render, AWS, or DigitalOcean. You will need to spin up *two* instances:
    - The Web Server (Start Command: `uvicorn app.main:app`)
-   - The Background Worker (Start Command: `dramatiq app.workers.tasks`)
+   - The Background Worker (Start Command: `python run_worker.py`)
 3. **Redis**: Swap out the local Docker Redis container for a managed Redis service (like Upstash or Redis Cloud), and update your backend `.env` variables to point to it.
 4. **Auth**: Add your live domain to Supabase's authentication settings so logins and redirects work correctly.
