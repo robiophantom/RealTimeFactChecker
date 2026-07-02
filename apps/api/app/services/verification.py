@@ -79,13 +79,13 @@ def verify_claims_batch(claims_list: list[dict]) -> tuple[list[dict], int, int]:
         
         try:
             completion = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="openai/gpt-oss-120b",
                 messages=[
                     {"role": "system", "content": "You are an expert fact-checking AI. You analyze evidence objectively and provide accurate, unbiased verdicts. Always output a valid JSON object containing the 'results' array."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
-                max_tokens=800,
+                max_tokens=2000,
                 response_format={"type": "json_object"}
             )
             

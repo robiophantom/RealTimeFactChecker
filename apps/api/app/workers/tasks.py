@@ -119,7 +119,7 @@ def process_media(upload_id: str):
         if len(text_content.strip()) == 0:
             raise ValueError("No valid speech or text data found in the file.")
             
-        max_tokens = limits.get("max_transcript_tokens", 7000)
+        max_tokens = limits.get("max_transcript_tokens", 5000)
         # Calculate precise token count
         import tiktoken
         encoding = tiktoken.get_encoding("cl100k_base")

@@ -28,7 +28,7 @@ completion = client.chat.completions.create(
         {"role": "user", "content": prompt}
     ],
     temperature=0.0,
-    max_tokens=800,
+    max_tokens=2000,
     response_format={"type": "json_object"}
 )
 

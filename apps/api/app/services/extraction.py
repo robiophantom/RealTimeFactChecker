@@ -10,29 +10,46 @@ def extract_claims(text: str) -> tuple[list[dict], int, int]:
     Returns: (claims_list, input_tokens, output_tokens)
     """
     prompt = f"""
-    Analyze the following text and extract ONLY factual statements that can be objectively verified.
-    - Treat ANY testable statement, statistic, or data point (e.g., "Indian GDP is 25 trillion dollars") as a factual claim, even if it is a single standalone sentence.
-    - Ensure that the extracted statements are accurate, exact representations of the original text, or concisely summarized without losing their original meaning.
-    - Strictly ignore subjective opinions, emotions, predictions, and questions.
-    
-    Output the result as a JSON object containing a single key "claims", which must be an array of objects.
-    Each object in the "claims" array must have a 'claim' key (the factual statement) and a 'context' key (brief explanation of surrounding context, leave empty if there is none).
-    
+    Extract every FACTUAL CLAIM from the text below — a statement asserting something
+    checkable against reality (true or false), such as statistics, dates, named events,
+    causal statements ("X caused Y"), definitions, existence claims, comparisons, or
+    predictions stated with certainty (not hedged).
+
+    DO NOT extract:
+    - Opinions, value judgments, or taste ("this is the best...", "I love...").
+    - Questions, commands, or requests.
+    - Hedged/uncertain statements ("I think...", "maybe...", "it could be...").
+    - The speaker's own feelings, intentions, or plans ("I will try to...", "I feel...").
+    - Greetings, filler, or rhetorical statements.
+
+    If a sentence mixes opinion and fact, extract only the factual part.
+    Keep claims verbatim or near-verbatim from the text — do not add information that
+    isn't explicitly stated. If the same claim appears more than once, extract it only once.
+
+    Example:
+    Text: "I think the economy is doing badly because unemployment rose to 6.2% last month."
+    Claims: [{{"claim": "unemployment rose to 6.2% last month", "context": "Speaker's view on the economy"}}]
+    ("I think the economy is doing badly" is excluded — it's an opinion.)
+
+    Output a JSON object with a single key "claims": an array of objects, each with:
+    - "claim": the factual statement (verbatim or concisely summarized without losing meaning)
+    - "context": brief surrounding context needed to understand the claim, or "" if self-contained
+
     Text:
     {text}
-    
+
     Output JSON strictly:
     """
     
     try:
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[
-                {"role": "system", "content": "You are a precise, unbiased data extraction assistant. Focus only on extracting verifiable factual statements. Always output a valid JSON object containing the 'claims' array."},
+                {"role": "system", "content": "You are a precise, unbiased fact-extraction assistant. You extract only objectively verifiable factual claims and exclude opinions, hedged statements, questions, and intentions. Always output a valid JSON object containing the 'claims' array, with each item having exactly 'claim' and 'context' keys."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.0,
-            max_tokens=1000,
+            max_tokens=2000,
             response_format={"type": "json_object"}
         )
         

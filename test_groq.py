@@ -24,13 +24,13 @@ prompt = f"""
 """
 
 completion = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     messages=[
         {"role": "system", "content": "You are a precise, unbiased data extraction assistant. Focus only on extracting verifiable factual statements. Always output a valid JSON object containing the 'claims' array."},
         {"role": "user", "content": prompt}
     ],
     temperature=0.0,
-    max_tokens=1000,
+    max_tokens=2000,
     response_format={"type": "json_object"}
 )
 
