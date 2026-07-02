@@ -67,6 +67,7 @@ You need to tell the app how to connect to your services. Create two `.env` file
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
@@ -75,9 +76,12 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_JWT_SECRET=your_jwt_secret
 
 GROQ_API_KEY=your_groq_key
 TAVILY_API_KEY=your_tavily_key
+
+REDIS_URL=redis://redis:6379/0
 ```
 *(Note: Never commit these keys to version control!)*
 
@@ -87,11 +91,10 @@ Open a terminal in the root of the project and start the backend using Docker:
 docker-compose build
 docker-compose up -d
 ```
-*This spins up FastAPI, Redis, and the background dramatiq workers, fully linking their shared storage volumes.*
+*This spins up FastAPI, Redis, a local PostgreSQL database, and the background dramatiq workers, fully linking their shared storage volumes.*
 
-Open a **second terminal**, go into the frontend folder, and start Next.js:
+Open a **second terminal**, go into the root folder, and start Next.js using Turbo:
 ```bash
-cd apps/web
 npm install
 npm run dev
 ```
