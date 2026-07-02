@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     TAVILY_API_KEY: str = ""
     REDIS_URL: str = "redis://localhost:6379/0"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"

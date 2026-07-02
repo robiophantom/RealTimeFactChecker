@@ -71,7 +71,7 @@ export function RealtimeMic({ onStreamStarted }: { onStreamStarted: (id: string)
         const formData = new FormData()
         formData.append('file', blob, 'recorded_audio.webm')
 
-        const response = await fetch('http://localhost:8000/api/v1/upload', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload`, {
           method: 'POST',
           headers: {
             ...(session && { 'Authorization': `Bearer ${session.access_token}` })

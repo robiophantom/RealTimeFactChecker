@@ -14,7 +14,7 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/limits')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/limits`)
       .then(res => res.json())
       .then(data => {
         if (data) setLimits(data)
@@ -78,7 +78,7 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('http://localhost:8000/api/v1/upload', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload`, {
         method: 'POST',
         headers: {
           ...(session && { 'Authorization': `Bearer ${session.access_token}` })

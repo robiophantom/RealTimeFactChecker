@@ -63,7 +63,7 @@ export function AdminClientWrapper({
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
 
-      const response = await fetch('http://localhost:8000/api/v1/admin/settings', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/admin/settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

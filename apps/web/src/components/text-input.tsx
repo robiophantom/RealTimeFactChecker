@@ -16,7 +16,7 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
     const saved = localStorage.getItem('factCheckerTextDraft')
     if (saved) setText(saved)
     
-    fetch('http://localhost:8000/api/v1/limits')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/limits`)
       .then(res => res.json())
       .then(data => {
         if (data) setLimits(data)
@@ -35,7 +35,7 @@ export function TextInput({ onProcessStarted }: { onProcessStarted: (id: string)
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       
-      const response = await fetch('http://localhost:8000/api/v1/text', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/text`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

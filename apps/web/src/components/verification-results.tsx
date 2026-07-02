@@ -56,7 +56,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     const pollInterval = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        const res = await fetch(`http://localhost:8000/api/v1/upload/${uploadId}/status`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload/${uploadId}/status`, {
           headers: {
             ...(session && { 'Authorization': `Bearer ${session.access_token}` })
           }
@@ -96,7 +96,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     )
     const { data: { session } } = await supabase.auth.getSession()
     
-    await fetch(`http://localhost:8000/api/v1/upload/${uploadId}/cancel`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload/${uploadId}/cancel`, {
       method: 'POST',
       headers: {
         ...(session && { 'Authorization': `Bearer ${session.access_token}` })
