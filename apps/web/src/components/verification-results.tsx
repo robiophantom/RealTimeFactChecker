@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, ExternalLink } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
@@ -22,6 +22,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
   const [reportSummary, setReportSummary] = useState<any>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   useEffect(() => {
     // 1. Initialize the Supabase browser client
@@ -53,7 +54,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
       .subscribe()
 
     // 4. Poll for backend status
-    const pollInterval = setInterval(async () => {
+    pollIntervalRef.current = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload/${uploadId}/status`, {
@@ -68,10 +69,10 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
           setProcessingStatus(data.status)
           if (data.status === 'failed') {
             setErrorMessage(data.error_message || 'An unknown error occurred.')
-            clearInterval(pollInterval)
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
           }
           if (data.status === 'completed') {
-            clearInterval(pollInterval)
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
             const { data: report } = await supabase.from('reports').select('*').eq('upload_id', uploadId).single()
             if (report) setReportSummary(report)
           }
@@ -84,7 +85,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     // 5. Cleanup the subscription and interval when the component unmounts
     return () => {
       supabase.removeChannel(channel)
-      clearInterval(pollInterval)
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
     }
   }, [uploadId])
 
@@ -96,12 +97,22 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     )
     const { data: { session } } = await supabase.auth.getSession()
     
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload/${uploadId}/cancel`, {
-      method: 'POST',
-      headers: {
-        ...(session && { 'Authorization': `Bearer ${session.access_token}` })
-      }
-    })
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/upload/${uploadId}/cancel`, {
+        method: 'POST',
+        headers: {
+          ...(session && { 'Authorization': `Bearer ${session.access_token}` })
+        }
+      })
+      
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+      setProcessingStatus('failed')
+      setErrorMessage('Processing stopped by user.')
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsCancelling(false)
+    }
   }
 
   const getVerdictIcon = (verdict: string) => {

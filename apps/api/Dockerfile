@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir .
 
 # Copy application code
 COPY ./app ./app
+COPY run_worker.py /app/run_worker.py
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
