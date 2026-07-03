@@ -173,7 +173,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
           <h2 className="text-2xl font-bold text-white mb-2">Verification Complete</h2>
           <p className="text-indigo-200 mb-6">{reportSummary.summary}</p>
           
-          <div className="flex gap-6 mb-6">
+          <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:gap-6 mb-6">
             <div className="flex flex-col">
               <span className="text-3xl font-bold text-white">{reportSummary.total_claims}</span>
               <span className="text-sm text-zinc-400">Total Claims</span>
@@ -188,7 +188,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
             </div>
           </div>
           
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <a 
               href={`/dashboard/reports/${reportSummary.id}`}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors"

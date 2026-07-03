@@ -77,12 +77,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <h2 className="text-lg font-medium">Subscription & Usage</h2>
           </div>
           <div className="p-6">
-            <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl mb-4">
               <div>
                 <h3 className="font-medium text-white mb-1">Current Tier</h3>
                 <p className="text-sm text-zinc-400">{remainingTokens.toLocaleString()} API tokens remaining this month</p>
               </div>
-              <button className="px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors">
+              <button className="px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors w-full sm:w-auto">
                 Upgrade Plan
               </button>
             </div>

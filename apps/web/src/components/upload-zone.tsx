@@ -122,7 +122,7 @@ export function UploadZone({ onUploadStarted }: { onUploadStarted: (id: string) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-colors flex flex-col items-center justify-center
+            className={`relative border-2 border-dashed rounded-xl p-6 sm:p-12 text-center transition-colors flex flex-col items-center justify-center
               ${dragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/50'}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}

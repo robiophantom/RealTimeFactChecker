@@ -87,7 +87,7 @@ export function AdminClientWrapper({
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Admin</h1>
           <p className="text-zinc-400 mt-2">Monitor platform activity and configure global constraints.</p>

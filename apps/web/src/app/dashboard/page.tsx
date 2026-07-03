@@ -22,7 +22,7 @@ export default function DashboardPage() {
         <div className={`flex border-b border-zinc-800/50 ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
           <button
             onClick={() => setActiveTab('upload')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'upload' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 px-1 text-xs sm:text-sm font-medium transition-colors relative ${activeTab === 'upload' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             File Upload
             {activeTab === 'upload' && (
@@ -31,7 +31,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('text')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'text' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 px-1 text-xs sm:text-sm font-medium transition-colors relative ${activeTab === 'text' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Paste Text
             {activeTab === 'text' && (
@@ -40,7 +40,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('mic')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'mic' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 px-1 text-xs sm:text-sm font-medium transition-colors relative ${activeTab === 'mic' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Live Microphone
             {activeTab === 'mic' && (
