@@ -132,10 +132,19 @@ function LoginContent() {
                 <label className="text-xs font-medium text-zinc-400" htmlFor="password">Password</label>
                 {isLogin && (
                   <button 
-                    formAction={resetPassword} 
-                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    formAction={(formData) => {
+                      startTransition(async () => {
+                        const result = await resetPassword(formData);
+                        if (result && result.error) {
+                          setAlertMsg(result.error);
+                          setTimeout(() => setAlertMsg(null), 2000);
+                        }
+                      });
+                    }}
+                    disabled={isPending}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Forgot password?
+                    {isPending ? 'Sending...' : 'Forgot password?'}
                   </button>
                 )}
               </div>
