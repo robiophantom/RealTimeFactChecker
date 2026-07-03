@@ -23,10 +23,12 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen bg-black text-white selection:bg-indigo-500/30">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-zinc-800 bg-zinc-950 flex flex-col">
+      <aside className="w-60 border-r border-zinc-800 bg-zinc-950 flex flex-col">
         <div className="p-6">
-          <Link href="/dashboard" className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            Fact Checker
+          <Link href="/dashboard" className="text-2xl font-black tracking-tighter flex items-center gap-2 group">
+            <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent transition-all duration-500">
+              Satya
+            </span>
           </Link>
         </div>
         
@@ -75,7 +77,7 @@ export default async function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
+        <div className="max-w-5xl mx-auto p-6 lg:p-8">
           {children}
         </div>
       </main>

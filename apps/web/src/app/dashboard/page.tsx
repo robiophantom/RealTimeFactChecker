@@ -12,17 +12,17 @@ export default function DashboardPage() {
   const [currentUploadId, setCurrentUploadId] = useState<string | null>(null)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">New Verification</h1>
-        <p className="text-zinc-400 mt-2">Upload media, stream audio, or paste text to extract and verify factual claims.</p>
+        <h1 className="text-2xl font-bold tracking-tight">New Verification</h1>
+        <p className="text-zinc-400 mt-2 text-sm">Upload media, stream audio, or paste text to extract and verify factual claims.</p>
       </div>
 
       <div className="bg-zinc-950 border border-zinc-800/50 rounded-2xl overflow-hidden shadow-2xl">
         <div className={`flex border-b border-zinc-800/50 ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
           <button
             onClick={() => setActiveTab('upload')}
-            className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === 'upload' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'upload' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             File Upload
             {activeTab === 'upload' && (
@@ -31,7 +31,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('text')}
-            className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === 'text' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'text' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Paste Text
             {activeTab === 'text' && (
@@ -40,7 +40,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('mic')}
-            className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === 'mic' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'mic' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Live Microphone
             {activeTab === 'mic' && (
@@ -49,7 +49,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className={`p-8 min-h-[300px] ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`p-6 min-h-[250px] ${currentUploadId ? 'opacity-50 pointer-events-none' : ''}`}>
           {activeTab === 'upload' && <UploadZone onUploadStarted={(id) => setCurrentUploadId(id)} />}
           {activeTab === 'text' && <TextInput onProcessStarted={(id) => setCurrentUploadId(id)} />}
           {activeTab === 'mic' && <RealtimeMic onStreamStarted={(id) => setCurrentUploadId(id)} />}

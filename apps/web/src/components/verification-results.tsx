@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, ExternalLink } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, ExternalLink, Printer } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
+import Link from 'next/link'
 
 interface Verification {
   id: string
@@ -119,7 +120,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     switch (verdict) {
       case 'True': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />
       case 'False': return <XCircle className="w-5 h-5 text-red-400" />
-      case 'Partially True': return <AlertTriangle className="w-5 h-5 text-amber-400" />
+      case 'Partially True': return <AlertTriangle className="w-5 h-5 text-indigo-400" />
       default: return <HelpCircle className="w-5 h-5 text-zinc-400" />
     }
   }
@@ -128,7 +129,7 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
     switch (verdict) {
       case 'True': return 'bg-emerald-500/10 border-emerald-500/20'
       case 'False': return 'bg-red-500/10 border-red-500/20'
-      case 'Partially True': return 'bg-amber-500/10 border-amber-500/20'
+      case 'Partially True': return 'bg-indigo-500/10 border-indigo-500/20'
       default: return 'bg-zinc-500/10 border-zinc-500/20'
     }
   }
@@ -194,14 +195,14 @@ export function VerificationResults({ uploadId }: { uploadId: string }) {
             >
               View Full Report
             </a>
-            <a 
-              href={`/dashboard/reports/${reportSummary.id}/print`}
+            <Link
+              href={`/report/${reportSummary.id}/print`}
               target="_blank"
-              rel="noreferrer"
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-900 border border-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors w-full"
             >
+              <Printer className="w-4 h-4" />
               Export PDF
-            </a>
+            </Link>
           </div>
         </div>
       )}

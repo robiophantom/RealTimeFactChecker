@@ -2,6 +2,8 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { AdminClientWrapper } from './admin-client'
 import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -85,15 +87,20 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <AdminClientWrapper 
-      totalUsers={totalUsers || 0}
-      totalReports={totalReports || 0}
-      totalTokenUsage={totalTokenUsage}
-      totalApiRequests={totalApiRequests || 0}
-      chartData={chartData}
-      chartLabels={chartLabels}
-      recentUsers={recentUsers}
-      systemSettings={systemSettings}
-    />
+    <div className="space-y-6">
+      <Link href="/dashboard" className="text-zinc-400 hover:text-white flex items-center gap-2 transition-colors font-medium w-fit">
+        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+      </Link>
+      <AdminClientWrapper 
+        totalUsers={totalUsers || 0}
+        totalReports={totalReports || 0}
+        totalTokenUsage={totalTokenUsage}
+        totalApiRequests={totalApiRequests || 0}
+        chartData={chartData}
+        chartLabels={chartLabels}
+        recentUsers={recentUsers}
+        systemSettings={systemSettings}
+      />
+    </div>
   )
 }

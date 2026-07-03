@@ -1,7 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
-import { User, Shield, CreditCard } from 'lucide-react'
+import { User, Shield, CreditCard, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+import { resetCurrentUserPassword, updatePassword } from '@/app/login/actions'
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const resolvedSearchParams = await searchParams
+  const message = resolvedSearchParams.message
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -31,9 +36,18 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8 max-w-3xl">
       <div>
+        <Link href="/dashboard" className="text-zinc-400 hover:text-white flex items-center gap-2 transition-colors font-medium mb-4 w-fit">
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+        </Link>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-zinc-400 mt-2">Manage your personal information, security preferences, and subscription.</p>
       </div>
+
+      {message && (
+        <div className={`p-4 rounded-lg border text-sm ${message.includes('sent') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+          {message}
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* Profile Section */}
@@ -82,14 +96,46 @@ export default async function SettingsPage() {
 
         {/* Security Section */}
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-zinc-800 flex items-center gap-3">
-            <Shield className="w-5 h-5 text-rose-400" />
-            <h2 className="text-lg font-medium">Security</h2>
+          <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-rose-400" />
+              <h2 className="text-lg font-medium">Security</h2>
+            </div>
+            <form action={resetCurrentUserPassword}>
+              <button type="submit" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+                Send Reset Email
+              </button>
+            </form>
           </div>
           <div className="p-6">
-            <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors">
-              Reset Password
-            </button>
+            <form action={updatePassword} className="space-y-4 max-w-sm">
+              <h3 className="text-sm font-medium text-white mb-4">Set New Password</h3>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-zinc-400" htmlFor="password">New Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-zinc-400" htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+              <button type="submit" className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors mt-2">
+                Update Password
+              </button>
+            </form>
           </div>
         </div>
       </div>

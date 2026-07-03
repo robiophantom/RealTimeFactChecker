@@ -28,12 +28,12 @@ def get_system_limits():
         "user_monthly_token_limit": 10000
     }
 
-def check_token_quota(user_id: str, monthly_limit: int):
+def check_token_quota(user_id: str, monthly_limit: int, estimated_tokens: int = 0):
     now = datetime.now()
     month_start = datetime(now.year, now.month, 1).isoformat()
     res = supabase_client.table("usage_logs").select("input_tokens, output_tokens").eq("user_id", user_id).gte("created_at", month_start).execute()
     used_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in res.data)
-    if used_tokens >= monthly_limit:
+    if used_tokens + estimated_tokens >= monthly_limit:
         raise ValueError(f"You have reached your monthly limit of {monthly_limit} API tokens.")
 
 def extract_text_from_file(file_path: str, file_type: str) -> str:
@@ -127,6 +127,9 @@ def process_media(upload_id: str):
         
         if num_tokens > max_tokens:
             raise ValueError(f"Extracted text exceeds the maximum allowed token limit ({max_tokens} tokens). Found {num_tokens} tokens. Please provide a shorter file.")
+            
+        # Check token quota again now that we know the precise token count
+        check_token_quota(user_id, limits.get("user_monthly_token_limit", 10000), num_tokens)
             
         if not transcript_res.data:
             # Save transcript

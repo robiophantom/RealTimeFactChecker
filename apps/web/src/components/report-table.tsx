@@ -148,7 +148,7 @@ export function ReportTable({ initialReports }: { initialReports: any[] }) {
                       <span>View</span>
                     </Link>
                     <Link 
-                      href={`/dashboard/reports/${report.id}/print`}
+                      href={`/report/${report.id}/print`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors"

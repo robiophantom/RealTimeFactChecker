@@ -1,15 +1,26 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { motion } from 'framer-motion'
-import { login, signup, signInWithGoogle } from './actions'
+import { useState, Suspense, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { login, signup, signInWithGoogle, resetPassword } from './actions'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function LoginContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [pending, setPending] = useState(false)
   const searchParams = useSearchParams()
-  const message = searchParams.get('message')
+  const urlMessage = searchParams.get('message')
+  const [alertMsg, setAlertMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (urlMessage) {
+      setAlertMsg(urlMessage)
+      const timer = setTimeout(() => {
+        setAlertMsg(null)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [urlMessage])
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-4 selection:bg-indigo-500/30">
@@ -22,20 +33,40 @@ function LoginContent() {
         className="w-full max-w-md relative z-10"
       >
         <div className="bg-zinc-950 border border-zinc-800/50 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-              Fact Checker
-            </h1>
+          <div className="mb-8 text-center flex flex-col items-center">
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex items-center gap-2 mb-2"
+            >
+              <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                Satya
+              </h1>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse mt-1" />
+            </motion.div>
             <p className="text-zinc-500 mt-2 text-sm">
               {isLogin ? 'Welcome back to your dashboard' : 'Create your account to get started'}
             </p>
           </div>
 
-          {message && (
-            <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {message}
-            </div>
-          )}
+          <div className="h-12 mb-2">
+            <AnimatePresence>
+              {alertMsg && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`p-3 rounded-lg border text-sm text-center ${
+                    alertMsg.includes('sent') || alertMsg.includes('success') 
+                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                      : 'bg-red-500/10 border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {alertMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <form action={isLogin ? login : signup} onSubmit={() => setPending(true)} className="space-y-4">
             {!isLogin && (
@@ -46,7 +77,7 @@ function LoginContent() {
                   name="full_name"
                   type="text"
                   autoComplete="name"
-                  required
+                  required={!isLogin}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                   placeholder="John Doe"
                 />
@@ -67,13 +98,24 @@ function LoginContent() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-400" htmlFor="password">Password</label>
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-medium text-zinc-400" htmlFor="password">Password</label>
+                {isLogin && (
+                  <button 
+                    formAction={resetPassword} 
+                    onClick={() => setPending(true)}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete={isLogin ? "current-password" : "new-password"}
-                required
+                required={!isLogin}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                 placeholder="••••••••"
               />

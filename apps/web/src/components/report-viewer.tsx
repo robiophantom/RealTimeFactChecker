@@ -11,7 +11,7 @@ export function ReportViewer({ report, claims, transcript }: { report: any, clai
     switch (verdict) {
       case 'True': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />
       case 'False': return <XCircle className="w-5 h-5 text-red-400" />
-      case 'Partially True': return <AlertTriangle className="w-5 h-5 text-amber-400" />
+      case 'Partially True': return <AlertTriangle className="w-5 h-5 text-indigo-400" />
       default: return <HelpCircle className="w-5 h-5 text-zinc-400" />
     }
   }
@@ -20,7 +20,7 @@ export function ReportViewer({ report, claims, transcript }: { report: any, clai
     switch (verdict) {
       case 'True': return 'bg-emerald-500/10 border-emerald-500/20'
       case 'False': return 'bg-red-500/10 border-red-500/20'
-      case 'Partially True': return 'bg-amber-500/10 border-amber-500/20'
+      case 'Partially True': return 'bg-indigo-500/10 border-indigo-500/20'
       default: return 'bg-zinc-500/10 border-zinc-500/20'
     }
   }
@@ -37,7 +37,7 @@ export function ReportViewer({ report, claims, transcript }: { report: any, clai
             </p>
           </div>
           <Link 
-            href={`/dashboard/reports/${report.id}/print`} 
+            href={`/report/${report.id}/print`} 
             target="_blank"
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-500/20"
           >
@@ -82,9 +82,9 @@ export function ReportViewer({ report, claims, transcript }: { report: any, clai
                   <span className="text-3xl font-bold text-red-400">{report.false_claims}</span>
                   <span className="text-sm text-red-400/80 font-medium">False</span>
                 </div>
-                <div className="flex flex-col p-4 bg-amber-500/5 rounded-lg border border-amber-500/10">
-                  <span className="text-3xl font-bold text-amber-400">{report.partially_true_claims}</span>
-                  <span className="text-sm text-amber-400/80 font-medium">Mixed</span>
+                <div className="flex flex-col p-4 bg-indigo-500/5 rounded-lg border border-indigo-500/10">
+                  <span className="text-3xl font-bold text-indigo-400">{report.partially_true_claims}</span>
+                  <span className="text-sm text-indigo-400/80 font-medium">Mixed</span>
                 </div>
               </div>
             </div>
