@@ -17,7 +17,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect('/login?message=Could not authenticate user')
+    return { error: 'Incorrect Email or Password.' }
   }
 
   revalidatePath('/', 'layout')
@@ -41,9 +41,9 @@ export async function signup(formData: FormData) {
 
   if (error) {
     if (error.message.toLowerCase().includes('already registered')) {
-      redirect('/login?message=Email already exists')
+      return { error: 'Email already exists' }
     }
-    redirect(`/login?message=${encodeURIComponent(error.message)}`)
+    return { error: error.message }
   }
 
   revalidatePath('/', 'layout')

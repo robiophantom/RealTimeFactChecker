@@ -1,32 +1,49 @@
 'use client'
 
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense, useEffect, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Eye, EyeOff } from 'lucide-react'
 import { login, signup, signInWithGoogle, resetPassword } from './actions'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function LoginContent() {
   const [isLogin, setIsLogin] = useState(true)
-  const [pending, setPending] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const searchParams = useSearchParams()
   const urlMessage = searchParams.get('message')
   const [alertMsg, setAlertMsg] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (urlMessage) {
       setAlertMsg(urlMessage)
       const timer = setTimeout(() => {
         setAlertMsg(null)
+        // Clean up the URL so a manual refresh doesn't trigger the toast again
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('message')
+        window.history.replaceState({}, '', newUrl.toString())
       }, 2000)
-      
-      // Clean up the URL so a manual refresh doesn't trigger the toast again
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('message')
-      window.history.replaceState({}, '', newUrl.toString())
       
       return () => clearTimeout(timer)
     }
   }, [urlMessage])
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    startTransition(async () => {
+      const action = isLogin ? login : signup
+      const result = await action(formData)
+      if (result && result.error) {
+        setAlertMsg(result.error)
+        setTimeout(() => setAlertMsg(null), 2000)
+      }
+    })
+  }
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-4 selection:bg-indigo-500/30">
@@ -74,7 +91,7 @@ function LoginContent() {
             </AnimatePresence>
           </div>
 
-          <form action={isLogin ? login : signup} onSubmit={() => setPending(true)} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Hidden submit button so pressing Enter triggers main action, not 'Forgot password?' */}
             <button type="submit" className="hidden" aria-hidden="true" />
             
@@ -85,6 +102,8 @@ function LoginContent() {
                   id="full_name"
                   name="full_name"
                   type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   autoComplete="name"
                   required={!isLogin}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
@@ -95,15 +114,17 @@ function LoginContent() {
             
             <div className="space-y-2">
               <label className="text-xs font-medium text-zinc-400" htmlFor="email">Email Address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="you@example.com"
-              />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="you@example.com"
+                />
             </div>
 
             <div className="space-y-2">
@@ -119,23 +140,35 @@ function LoginContent() {
                   </button>
                 )}
               </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                required={!isLogin}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  required={!isLogin}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all pr-10"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={isPending}
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {pending ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
+              {isPending ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
