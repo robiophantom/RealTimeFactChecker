@@ -133,7 +133,6 @@ function LoginContent() {
                 {isLogin && (
                   <button 
                     formAction={resetPassword} 
-                    onClick={() => setPending(true)}
                     className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
                     Forgot password?
