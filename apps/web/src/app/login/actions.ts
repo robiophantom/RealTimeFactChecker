@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -70,6 +70,13 @@ export async function resetPassword(formData: FormData) {
   
   if (!email) {
     redirect('/login?message=Email is required for password reset')
+  }
+
+  const adminClient = await createAdminClient()
+  const { data: user } = await adminClient.from('users').select('id').eq('email', email).single()
+
+  if (!user) {
+    redirect('/login?message=No account found with this email address')
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

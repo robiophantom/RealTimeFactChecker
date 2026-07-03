@@ -18,6 +18,12 @@ function LoginContent() {
       const timer = setTimeout(() => {
         setAlertMsg(null)
       }, 2000)
+      
+      // Clean up the URL so a manual refresh doesn't trigger the toast again
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('message')
+      window.history.replaceState({}, '', newUrl.toString())
+      
       return () => clearTimeout(timer)
     }
   }, [urlMessage])
@@ -69,6 +75,9 @@ function LoginContent() {
           </div>
 
           <form action={isLogin ? login : signup} onSubmit={() => setPending(true)} className="space-y-4">
+            {/* Hidden submit button so pressing Enter triggers main action, not 'Forgot password?' */}
+            <button type="submit" className="hidden" aria-hidden="true" />
+            
             {!isLogin && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-zinc-400" htmlFor="full_name">Full Name</label>
