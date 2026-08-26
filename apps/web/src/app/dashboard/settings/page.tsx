@@ -44,7 +44,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       </div>
 
       {message && (
-        <div className={`p-4 rounded-lg border text-sm ${message.includes('sent') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+        <div className={`p-4 rounded-lg border text-sm ${message.includes('sent') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-green-500/10 border-green-500/20 text-green-600'}`}>
           {message}
         </div>
       )}
