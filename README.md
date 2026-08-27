@@ -111,16 +111,3 @@ For security reasons, there is no public sign-up page for admins. To become an a
 3. Go to the **Table Editor** -> `users` table.
 4. Find your newly created account and manually change the `role` column from `user` to `admin`.
 5. The next time you log into the app, you will have access to the Admin Panel to monitor system usage!
-
----
-
-## 🚢 Preparing for Production
-
-When you are ready to put this on the internet for real users, you'll need to break the pieces out of local Docker containers:
-
-1. **Frontend**: Deploy the `apps/web` folder to a host like Vercel. Make sure to update the `NEXT_PUBLIC_SITE_URL` environment variable to your actual domain.
-2. **Backend**: Deploy the `apps/api` folder to a service like Render, AWS, or DigitalOcean. You will need to spin up *two* instances:
-   - The Web Server (Start Command: `uvicorn app.main:app`)
-   - The Background Worker (Start Command: `python run_worker.py`)
-3. **Redis**: Swap out the local Docker Redis container for a managed Redis service (like Upstash or Redis Cloud), and update your backend `.env` variables to point to it.
-4. **Auth**: Add your live domain to Supabase's authentication settings so logins and redirects work correctly.
